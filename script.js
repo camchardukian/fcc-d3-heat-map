@@ -43,13 +43,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const yScale = d3
     .scaleLinear()
-    .domain([1, 12])
+    .domain([0, 12])
     .range([height - padding, padding]);
 
-  const xAxis = d3.axisBottom(xScale);
+  const xAxis = d3.axisBottom(xScale).tickFormat((d) => d);
   const yAxis = d3
     .axisLeft(yScale)
     .tickFormat((d) => Object.keys(months).find((key) => months[key] === d));
+
+  svg
+    .selectAll("rect")
+    .data(dataset)
+    .enter()
+    .append("rect")
+    // @TODO -- Add class to apply fill color based on temperature of said data point
+    .attr("class", "cell")
+    .attr("x", (d) => xScale(d.year))
+    .attr("y", (d) => yScale(d.month))
+    // @TODO -- Fix width and height below to calculate dynamically
+    .attr("width", () => 4)
+    .attr("height", () => 20)
+    .attr("data-year", (d) => d.year)
+    .attr("data-month", (d) => d.month - 1)
+    .attr("data-temp", (d) => baseTemperature + d.variance);
 
   svg
     .append("g")
