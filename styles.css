@@ -2,3 +2,7 @@ body {
   border: 1px solid teal;
   text-align: center;
 }
+
+.cell {
+  opacity: 0.1;
+}
