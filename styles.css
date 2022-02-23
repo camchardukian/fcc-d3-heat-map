@@ -6,3 +6,18 @@ body {
 .cell {
   opacity: 0.1;
 }
+
+#tooltip {
+  width: auto;
+  min-width: 300px;
+  height: auto;
+  background-color: lightblue;
+  display: inline-block;
+  padding: 8px 16px;
+  visibility: hidden;
+  position: absolute;
+  top: 112px;
+  left: 50%;
+  transform: translate(-50%);
+  white-space: pre-line;
+}
