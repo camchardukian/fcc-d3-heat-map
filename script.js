@@ -8,12 +8,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const fetchedResponse = await response.json();
   const { baseTemperature, monthlyVariance: dataset } = fetchedResponse;
-  console.log("baseTemperature", baseTemperature);
   console.log("dataset", dataset);
 
   const width = 800;
   const height = 400;
   const padding = 60;
+  const roundToNearestTenth = (number) => {
+    return Math.round(number * 10) / 10;
+  };
 
   const months = {
     January: 1,
@@ -51,6 +53,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .axisLeft(yScale)
     .tickFormat((d) => Object.keys(months).find((key) => months[key] === d));
 
+  const tooltip = d3.select("body").append("div").attr("id", "tooltip");
+
   svg
     .selectAll("rect")
     .data(dataset)
@@ -65,7 +69,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     .attr("height", () => 20)
     .attr("data-year", (d) => d.year)
     .attr("data-month", (d) => d.month - 1)
-    .attr("data-temp", (d) => baseTemperature + d.variance);
+    .attr("data-temp", (d) => baseTemperature + d.variance)
+    .on("mouseenter", (item) => {
+      const rectData = item.target?.__data__;
+      const roundedTempVariance =
+        roundToNearestTenth(rectData?.variance) > 0
+          ? `+${roundToNearestTenth(rectData?.variance)}`
+          : `${roundToNearestTenth(rectData?.variance)}`;
+      tooltip
+        .transition()
+        .style("visibility", "visible")
+        .text(
+          `Date: ${rectData?.month}/${rectData?.year}
+        Temperature: ${roundToNearestTenth(
+          baseTemperature + rectData?.variance
+        )}
+        Variance from base temperature: ${roundedTempVariance}`
+        )
+        .attr("data-year", rectData?.year);
+    })
+    .on("mouseout", () => tooltip.transition().style("visibility", "hidden"));
 
   svg
     .append("g")
