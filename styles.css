@@ -3,10 +3,6 @@ body {
   text-align: center;
 }
 
-.cell {
-  opacity: 0.1;
-}
-
 #tooltip {
   width: auto;
   min-width: 300px;

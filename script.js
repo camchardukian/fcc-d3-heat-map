@@ -13,8 +13,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   const width = 800;
   const height = 400;
   const padding = 60;
+  const HEAT_SCALE = {
+    COLDEST: 3.9,
+    COLD: 5.0,
+    CHILLY: 6.1,
+    COOL: 7.2,
+    NEUTRAL: 8.3,
+    LUKE_WARM: 9.5,
+    WARM: 10.6,
+    HOT: 11.7,
+    HOTTEST: 12.8,
+  };
+
   const roundToNearestTenth = (number) => {
     return Math.round(number * 10) / 10;
+  };
+
+  const handleApplyFillColor = (varianceFromBaseTemp) => {
+    const rectTemperature = roundToNearestTenth(
+      baseTemperature + varianceFromBaseTemp
+    );
+    console.log("rectTemperature", rectTemperature);
+    if (rectTemperature <= HEAT_SCALE.COLDEST) return "#4575b4";
+    if (rectTemperature <= HEAT_SCALE.COLD) return "#74add1";
+    if (rectTemperature <= HEAT_SCALE.CHILLY) return "#abd9e9";
+    if (rectTemperature <= HEAT_SCALE.COOL) return "#e0f3f8";
+    if (rectTemperature <= HEAT_SCALE.NEUTRAL) return "#ffffbf";
+    if (rectTemperature <= HEAT_SCALE.LUKE_WARM) return "#fee090";
+    if (rectTemperature <= HEAT_SCALE.WARM) return "#fdae61";
+    if (rectTemperature <= HEAT_SCALE.HOT) return "#f46d43";
+    if (rectTemperature <= HEAT_SCALE.HOTTEST) return "#ff5733";
   };
 
   const months = {
@@ -60,8 +88,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .data(dataset)
     .enter()
     .append("rect")
-    // @TODO -- Add class to apply fill color based on temperature of said data point
     .attr("class", "cell")
+    .attr("fill", (d) => handleApplyFillColor(d?.variance))
     .attr("x", (d) => xScale(d.year))
     .attr("y", (d) => yScale(d.month))
     // @TODO -- Fix width and height below to calculate dynamically
@@ -69,7 +97,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .attr("height", () => 20)
     .attr("data-year", (d) => d.year)
     .attr("data-month", (d) => d.month - 1)
-    .attr("data-temp", (d) => baseTemperature + d.variance)
+    .attr("data-temp", (d) => roundToNearestTenth(baseTemperature + d.variance))
     .on("mouseenter", (item) => {
       const rectData = item.target?.__data__;
       const roundedTempVariance =
@@ -89,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         .attr("data-year", rectData?.year);
     })
     .on("mouseout", () => tooltip.transition().style("visibility", "hidden"));
-
+  // @TODO -- Add a legend to the heat map
   svg
     .append("g")
     .attr("id", "x-axis")
