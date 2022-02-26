@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const fetchedResponse = await response.json();
   const { baseTemperature, monthlyVariance: dataset } = fetchedResponse;
-  console.log("dataset", dataset);
 
   const width = 800;
   const height = 400;
@@ -33,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rectTemperature = roundToNearestTenth(
       baseTemperature + varianceFromBaseTemp
     );
-    console.log("rectTemperature", rectTemperature);
     if (rectTemperature <= HEAT_SCALE.COLDEST) return "#4575b4";
     if (rectTemperature <= HEAT_SCALE.COLD) return "#74add1";
     if (rectTemperature <= HEAT_SCALE.CHILLY) return "#abd9e9";
@@ -110,14 +108,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         .text(
           `Date: ${rectData?.month}/${rectData?.year}
         Temperature: ${roundToNearestTenth(
-          baseTemperature + rectData?.variance
-        )}
+            baseTemperature + rectData?.variance
+          )}
         Variance from base temperature: ${roundedTempVariance}`
         )
         .attr("data-year", rectData?.year);
     })
     .on("mouseout", () => tooltip.transition().style("visibility", "hidden"));
-  // @TODO -- Add a legend to the heat map
+
   svg
     .append("g")
     .attr("id", "x-axis")
@@ -129,4 +127,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     .attr("id", "y-axis")
     .attr("transform", `translate(${padding},0)`)
     .call(yAxis);
+
+  // LEGEND
+
+  const legendWidth = width / 2;
+  const temperatureScaleArray = Object.values(HEAT_SCALE)
+  const xScaleLegend = d3
+    .scaleLinear()
+    .domain([0, 9])
+    .range([0, legendWidth]);
+
+  const legend = svg
+    .append("g")
+    .attr("id", "legend")
+    .attr("width", legendWidth)
+    .attr("transform", `translate(${(width - legendWidth) / 2},${height - (padding / 1.75)})`)
+
+  const legendScale = legend.append("g").attr("id", "legend-scale");
+
+  legendScale
+    .selectAll("rect")
+    .data(temperatureScaleArray)
+    .enter()
+    .append("rect")
+    .attr("class", "legend-scale-cell")
+    .attr("fill", (d) => handleApplyFillColor(d - baseTemperature))
+    .attr("width", xScaleLegend(1))
+    .attr("height", () => 20)
+    .attr("x", (_, i) => xScaleLegend(i))
+
+  legendScale.selectAll("text")
+    .data(temperatureScaleArray)
+    .enter()
+    .append("text")
+    .attr("x", (_, i) => xScaleLegend(i) + 10)
+    .attr("y", 32)
+    .text((d) => String(d).length > 1 ? d : `${d}.0`)
+
 });
