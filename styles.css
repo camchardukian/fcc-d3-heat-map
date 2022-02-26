@@ -17,3 +17,8 @@ body {
   transform: translate(-50%);
   white-space: pre-line;
 }
+
+.legend-scale-cell {
+  stroke: white;
+  stroke-width: 1;
+}
