@@ -7,11 +7,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     throw new Error(errorMessage);
   }
   const fetchedResponse = await response.json();
-  const { baseTemperature, monthlyVariance: dataset } = fetchedResponse;
 
+  // CONST DECLARATIONS
+  const { baseTemperature, monthlyVariance: dataset } = fetchedResponse;
   const width = 800;
   const height = 400;
   const padding = 60;
+  const minYear = d3.min(dataset, (d) => d.year)
+  const maxYear = d3.max(dataset, (d) => d.year)
+  const numberOfYears = maxYear - minYear
   const HEAT_SCALE = {
     COLDEST: 3.9,
     COLD: 5.0,
@@ -24,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     HOTTEST: 12.8,
   };
 
+  // HELPER METHODS
   const roundToNearestTenth = (number) => {
     return Math.round(number * 10) / 10;
   };
@@ -43,44 +48,46 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (rectTemperature <= HEAT_SCALE.HOTTEST) return "#ff5733";
   };
 
-  const months = {
-    January: 1,
-    February: 2,
-    March: 3,
-    April: 4,
-    May: 5,
-    June: 6,
-    July: 7,
-    August: 8,
-    September: 9,
-    October: 10,
-    November: 11,
-    December: 12,
-  };
-
+  // SVG
   const svg = d3
     .select("body")
     .append("svg")
     .attr("width", width)
     .attr("height", height);
 
+  // SCALES
   const xScale = d3
     .scaleLinear()
-    .domain([d3.min(dataset, (d) => d.year), d3.max(dataset, (d) => d.year)])
+    .domain([minYear, maxYear])
     .range([padding, width - padding]);
 
   const yScale = d3
-    .scaleLinear()
-    .domain([0, 12])
+    .scaleTime()
+    .domain([new Date(0, 0, 0, 0, 0, 0, 0), new Date(0, 12, 0, 0, 0, 0, 0)])
     .range([height - padding, padding]);
 
+  // AXES
   const xAxis = d3.axisBottom(xScale).tickFormat((d) => d);
   const yAxis = d3
     .axisLeft(yScale)
-    .tickFormat((d) => Object.keys(months).find((key) => months[key] === d));
+    .tickFormat(d3.timeFormat('%B'))
 
+  svg
+    .append("g")
+    .attr("id", "x-axis")
+    .attr("transform", `translate(0,${height - padding})`)
+    .call(xAxis);
+
+  svg
+    .append("g")
+    .attr("id", "y-axis")
+    .attr("transform", `translate(${padding},0)`)
+    .call(yAxis);
+
+  // TOOLTIP
   const tooltip = d3.select("body").append("div").attr("id", "tooltip");
 
+  // RECT
   svg
     .selectAll("rect")
     .data(dataset)
@@ -89,10 +96,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     .attr("class", "cell")
     .attr("fill", (d) => handleApplyFillColor(d?.variance))
     .attr("x", (d) => xScale(d.year))
-    .attr("y", (d) => yScale(d.month))
-    // @TODO -- Fix width and height below to calculate dynamically
-    .attr("width", () => 4)
-    .attr("height", () => 20)
+    .attr("y", (d) => yScale(new Date(0, d.month) - 1, 0, 0, 0, 0, 0))
+    .attr("width", () => (width - (padding * 2)) / numberOfYears)
+    .attr("height", () => (height - (padding * 2)) / 12)
     .attr("data-year", (d) => d.year)
     .attr("data-month", (d) => d.month - 1)
     .attr("data-temp", (d) => roundToNearestTenth(baseTemperature + d.variance))
@@ -116,20 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
     .on("mouseout", () => tooltip.transition().style("visibility", "hidden"));
 
-  svg
-    .append("g")
-    .attr("id", "x-axis")
-    .attr("transform", `translate(0,${height - padding})`)
-    .call(xAxis);
-
-  svg
-    .append("g")
-    .attr("id", "y-axis")
-    .attr("transform", `translate(${padding},0)`)
-    .call(yAxis);
-
   // LEGEND
-
   const legendWidth = width / 2;
   const temperatureScaleArray = Object.values(HEAT_SCALE)
   const xScaleLegend = d3
@@ -163,5 +156,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     .attr("x", (_, i) => xScaleLegend(i) + 10)
     .attr("y", 32)
     .text((d) => String(d).length > 1 ? d : `${d}.0`)
-
 });
